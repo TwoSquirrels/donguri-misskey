@@ -40,6 +40,8 @@ interface MisskeyRequest {
   body: { user?: MisskeyUser; note?: MisskeyNote };
 }
 
+const cache: Cache = CacheService.getScriptCache();
+
 const properties: {
   DEBUG_EMAIL: string;
   MISSKEY_HOST: string;
@@ -49,6 +51,10 @@ const properties: {
 function doPost(event: Event): TextOutput {
   try {
     const req = JSON.parse(event.postData.contents) as MisskeyRequest;
+    if (cache.get(`misskey/received/${req.eventId}`)) {
+      return ContentService.createTextOutput("Already Received.\n");
+    }
+    cache.put(`misskey/events/${req.eventId}`, "RECEIVED");
     if (req.type === "mention") {
       mentioned(req.body.note!!);
     }
