@@ -76,8 +76,11 @@ function mentioned(note: MisskeyNote): void {
   const prompt: string = note.text
     .match(new RegExp(`(?<=@${getMyUser().username})[^0-9A-Za-z_].*$`))![0]
     .trim();
+  const command: string = prompt.match(/.*?(?=\s|$)/)![0];
+  const params: string = prompt.slice(command.length + 1);
+  const result: string = execute(command, params).trim();
   callMisskey("notes/create", {
-    text: "```\n" + prompt + "\n```",
+    text: "@" + note.user.username + (result.match(/\n/) ? "\n" : " ") + result,
     replyId: note.id,
     ...(note.visibility === "specified"
       ? {
@@ -86,6 +89,10 @@ function mentioned(note: MisskeyNote): void {
         }
       : { visibility: "home" }),
   });
+}
+
+function execute(command: string, params: string = ""): string {
+  return "```json\n" + JSON.stringify({ command, params }, null, 2) + "\n```";
 }
 
 function getMyUser(): MisskeyUser {
