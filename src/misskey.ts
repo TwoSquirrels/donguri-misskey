@@ -21,6 +21,7 @@ interface MisskeyNote {
   user: MisskeyUser;
   userId: string;
   visibility: "public" | "home" | "followers" | "specified";
+  visibleUserIds?: string[];
 }
 
 interface MisskeyRequest {
@@ -75,6 +76,12 @@ function mentioned(note: MisskeyNote): void {
         i: properties.MISSKEY_TOKEN,
         text: "```\n" + JSON.stringify(note.text) + "\n```",
         replyId: note.id,
+        ...(note.visibility === "specified"
+          ? {
+              visibility: "specified",
+              visibleUserIds: [...note.visibleUserIds, note.userId],
+            }
+          : { visibility: "home" }),
       }),
     }
   ).getContentText();
