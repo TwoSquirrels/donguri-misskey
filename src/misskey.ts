@@ -79,7 +79,12 @@ function mentioned(note: MisskeyNote): void {
   }
   cache.put(`misskey/cooldown/${note.userId}`, note.createdAt, 10);
   const prompt: string = note.text
-    .match(new RegExp(`(?<=@${getMyUser().username})[^0-9A-Za-z_].*$`))![0]
+    .match(
+      new RegExp(
+        `(?<=@${getMyUser().username}(@${properties.MISSKEY_HOST})?)` +
+          "[^0-9A-Za-z_@].*$"
+      )
+    )![0]
     .trim();
   const command: string = prompt.match(/.*?(?=\s|$)/)![0];
   const params: string = prompt.slice(command.length + 1);
@@ -101,7 +106,11 @@ function getMyUser(): MisskeyUser {
 
 function replyMisskey(note: MisskeyNote, text: string) {
   callMisskey("notes/create", {
-    text: "@" + note.user.username + (text.match(/\n/) ? "\n" : " ") + text,
+    text:
+      `@${note.user.username}` +
+      (note.user.host ? `@${note.user.host}` : "") +
+      (text.match(/\n/) ? "\n" : " ") +
+      text,
     replyId: note.id,
     ...(note.visibility === "specified"
       ? {
