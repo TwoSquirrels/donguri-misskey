@@ -73,22 +73,18 @@ function doPost(event: Event): TextOutput {
 
 function mentioned(note: MisskeyNote): void {
   if (note.user.isBot) return;
+  if (cache.get(`misskey/cooldown/${note.userId}`)) {
+    replyMisskey(note, "[Error] メンションが早すぎます！10 秒くらい待ってね！");
+    return;
+  }
+  cache.put(`misskey/cooldown/${note.userId}`, note.createdAt, 10);
   const prompt: string = note.text
     .match(new RegExp(`(?<=@${getMyUser().username})[^0-9A-Za-z_].*$`))![0]
     .trim();
   const command: string = prompt.match(/.*?(?=\s|$)/)![0];
   const params: string = prompt.slice(command.length + 1);
   const result: string = execute(command, params).trim();
-  callMisskey("notes/create", {
-    text: "@" + note.user.username + (result.match(/\n/) ? "\n" : " ") + result,
-    replyId: note.id,
-    ...(note.visibility === "specified"
-      ? {
-          visibility: "specified",
-          visibleUserIds: [...note.visibleUserIds, note.userId],
-        }
-      : { visibility: "home" }),
-  });
+  replyMisskey(note, result);
 }
 
 function execute(command: string, params: string = ""): string {
@@ -101,6 +97,19 @@ function getMyUser(): MisskeyUser {
   const user = callMisskey("i") as MisskeyUser;
   cache.put("misskey/i", JSON.stringify(user));
   return user as MisskeyUser;
+}
+
+function replyMisskey(note: MisskeyNote, text: string) {
+  callMisskey("notes/create", {
+    text: "@" + note.user.username + (text.match(/\n/) ? "\n" : " ") + text,
+    replyId: note.id,
+    ...(note.visibility === "specified"
+      ? {
+          visibility: "specified",
+          visibleUserIds: [...note.visibleUserIds, note.userId],
+        }
+      : { visibility: "home" }),
+  });
 }
 
 function callMisskey(endpoint: string, params: Object = {}): unknown {
