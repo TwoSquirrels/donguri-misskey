@@ -76,41 +76,36 @@ function mentioned(note: MisskeyNote): void {
   const prompt: string = note.text
     .match(new RegExp(`(?<=@${getMyUser().username})[^0-9A-Za-z_].*$`))![0]
     .trim();
-  const resJson: string = UrlFetchApp.fetch(
-    `https://${properties.MISSKEY_HOST}/api/notes/create`,
-    {
-      method: "post",
-      contentType: "application/json",
-      payload: JSON.stringify({
-        i: properties.MISSKEY_TOKEN,
-        text: "```\n" + prompt + "\n```",
-        replyId: note.id,
-        ...(note.visibility === "specified"
-          ? {
-              visibility: "specified",
-              visibleUserIds: [...note.visibleUserIds, note.userId],
-            }
-          : { visibility: "home" }),
-      }),
-    }
-  ).getContentText();
-  const res = JSON.parse(resJson);
-  if (res.error) throw res.error;
+  callMisskey("notes/create", {
+    text: "```\n" + prompt + "\n```",
+    replyId: note.id,
+    ...(note.visibility === "specified"
+      ? {
+          visibility: "specified",
+          visibleUserIds: [...note.visibleUserIds, note.userId],
+        }
+      : { visibility: "home" }),
+  });
 }
 
 function getMyUser(): MisskeyUser {
   const cachedUserJson: ?string = cache.get("misskey/i");
   if (cachedUserJson) return JSON.parse(cachedUserJson) as MisskeyUser;
+  const user = callMisskey("i") as MisskeyUser;
+  cache.put("misskey/i", JSON.stringify(user));
+  return user as MisskeyUser;
+}
+
+function callMisskey(endpoint: string, params: Object = {}): unknown {
   const resJson: string = UrlFetchApp.fetch(
-    `https://${properties.MISSKEY_HOST}/api/i`,
+    `https://${properties.MISSKEY_HOST}/api/${endpoint}`,
     {
       method: "post",
       contentType: "application/json",
-      payload: JSON.stringify({ i: properties.MISSKEY_TOKEN }),
+      payload: JSON.stringify({ i: properties.MISSKEY_TOKEN, ...params }),
     }
   ).getContentText();
   const res = JSON.parse(resJson);
   if (res.error) throw res.error;
-  cache.put("misskey/i", resJson);
-  return res as MisskeyUser;
+  return res;
 }
