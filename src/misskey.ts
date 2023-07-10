@@ -56,7 +56,7 @@ function doPost(event: Event): TextOutput {
     }
     cache.put(`misskey/events/${req.eventId}`, "RECEIVED");
     if (req.type === "mention") {
-      mentioned(req.body.note!!);
+      mentioned(req.body.note!);
     }
     return ContentService.createTextOutput("OK.\n");
   } catch (error) {
@@ -73,6 +73,9 @@ function doPost(event: Event): TextOutput {
 
 function mentioned(note: MisskeyNote): void {
   if (note.user.isBot) return;
+  const prompt: string = note.text
+    .match(new RegExp(`(?<=@${getMyUser().username})[^0-9A-Za-z_].*$`))![0]
+    .trim();
   const resJson: string = UrlFetchApp.fetch(
     `https://${properties.MISSKEY_HOST}/api/notes/create`,
     {
@@ -80,7 +83,7 @@ function mentioned(note: MisskeyNote): void {
       contentType: "application/json",
       payload: JSON.stringify({
         i: properties.MISSKEY_TOKEN,
-        text: "```\n" + JSON.stringify(note.text) + "\n```",
+        text: "```\n" + prompt + "\n```",
         replyId: note.id,
         ...(note.visibility === "specified"
           ? {
@@ -93,4 +96,21 @@ function mentioned(note: MisskeyNote): void {
   ).getContentText();
   const res = JSON.parse(resJson);
   if (res.error) throw res.error;
+}
+
+function getMyUser(): MisskeyUser {
+  const cachedUserJson: ?string = cache.get("misskey/i");
+  if (cachedUserJson) return JSON.parse(cachedUserJson) as MisskeyUser;
+  const resJson: string = UrlFetchApp.fetch(
+    `https://${properties.MISSKEY_HOST}/api/i`,
+    {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify({ i: properties.MISSKEY_TOKEN }),
+    }
+  ).getContentText();
+  const res = JSON.parse(resJson);
+  if (res.error) throw res.error;
+  cache.put("misskey/i", resJson);
+  return res as MisskeyUser;
 }
