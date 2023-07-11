@@ -64,7 +64,9 @@ function doPost(event: Event): TextOutput {
       GmailApp.sendEmail(
         properties.DEBUG_EMAIL,
         "[DEBUG] Error occured in Donguri BOT (Misskey)",
-        error.message + "\n\n" + JSON.stringify(error, null, 2)
+        `${error}\n` +
+          `\nerror: ${JSON.stringify(error, null, 2)}\n` +
+          `\nevent: ${JSON.stringify(event, null, 2)}`
       );
     }
     return ContentService.createTextOutput("Failed.\n");
@@ -74,22 +76,31 @@ function doPost(event: Event): TextOutput {
 function mentioned(note: MisskeyNote): void {
   if (note.user.isBot) return;
   if (cache.get(`misskey/cooldown/${note.userId}`)) {
-    replyMisskey(note, "[Error] メンションが早すぎます！10 秒くらい待ってね！");
+    replyMisskey(note, "[ERROR] メンションが早すぎます！10 秒くらい待ってね！");
     return;
   }
   cache.put(`misskey/cooldown/${note.userId}`, note.createdAt, 10);
-  const prompt: string = (
-    note.text.match(
-      new RegExp(
-        `(?<=@${getMyUser().username}(@${properties.MISSKEY_HOST})?)` +
-          "[^0-9A-Za-z_@].*$"
-      )
-    )?.[0] ?? ""
-  ).trim();
-  const command: string = prompt.match(/.*?(?=\s|$)/)![0];
-  const params: string = prompt.slice(command.length + 1);
-  const result: string = execute(command, params).trim();
-  replyMisskey(note, result);
+  try {
+    const prompt: string = (
+      note.text.match(
+        new RegExp(
+          `(?<=@${getMyUser().username}(@${properties.MISSKEY_HOST})?)` +
+            "[^0-9A-Za-z_@].*$"
+        )
+      )?.[0] ?? ""
+    ).trim();
+    const command: string = prompt.match(/.*?(?=\s|$)/)![0];
+    const params: string = prompt.slice(command.length + 1);
+    const result: string = execute(command, params).trim();
+    replyMisskey(note, result);
+  } catch (error) {
+    const reply: MisskeyNote = replyMisskey(
+      note,
+      "[ERROR] ごめん！エラーでちゃった！"
+    );
+    callMisskey("notes/favorites/create", { noteId: reply.id });
+    throw error;
+  }
 }
 
 function execute(command: string, params: string = ""): string {
@@ -104,8 +115,8 @@ function getMyUser(): MisskeyUser {
   return user as MisskeyUser;
 }
 
-function replyMisskey(note: MisskeyNote, text: string) {
-  callMisskey("notes/create", {
+function replyMisskey(note: MisskeyNote, text: string): MisskeyNote {
+  return callMisskey("notes/create", {
     text:
       `@${note.user.username}` +
       (note.user.host ? `@${note.user.host}` : "") +
@@ -118,7 +129,7 @@ function replyMisskey(note: MisskeyNote, text: string) {
           visibleUserIds: [...note.visibleUserIds, note.userId],
         }
       : { visibility: "home" }),
-  });
+  }).createdNote as MisskeyNote;
 }
 
 function callMisskey(endpoint: string, params: Object = {}): unknown {
