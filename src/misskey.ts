@@ -78,14 +78,14 @@ function mentioned(note: MisskeyNote): void {
     return;
   }
   cache.put(`misskey/cooldown/${note.userId}`, note.createdAt, 10);
-  const prompt: string = note.text
-    .match(
+  const prompt: string = (
+    note.text.match(
       new RegExp(
         `(?<=@${getMyUser().username}(@${properties.MISSKEY_HOST})?)` +
           "[^0-9A-Za-z_@].*$"
       )
-    )![0]
-    .trim();
+    )?.[0] ?? ""
+  ).trim();
   const command: string = prompt.match(/.*?(?=\s|$)/)![0];
   const params: string = prompt.slice(command.length + 1);
   const result: string = execute(command, params).trim();
