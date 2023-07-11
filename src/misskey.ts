@@ -91,7 +91,11 @@ function mentioned(note: MisskeyNote): void {
     ).trim();
     const command: string = prompt.match(/.*?(?=\s|$)/)![0];
     const params: string = prompt.slice(command.length + 1);
-    const result: string = execute(command, params).trim();
+    const result: string = execute(
+      command.normalize("NFKC").toLowerCase(),
+      params,
+      note
+    ).trim();
     replyMisskey(note, result);
   } catch (error) {
     const reply: MisskeyNote = replyMisskey(
@@ -101,10 +105,6 @@ function mentioned(note: MisskeyNote): void {
     callMisskey("notes/favorites/create", { noteId: reply.id });
     throw error;
   }
-}
-
-function execute(command: string, params: string = ""): string {
-  return "```json\n" + JSON.stringify({ command, params }, null, 2) + "\n```";
 }
 
 function getMyUser(): MisskeyUser {
