@@ -92,9 +92,10 @@ function mentioned(note: MisskeyNote): void {
     const prompt: string = (
       note.text.match(
         new RegExp(
-          `(?<=@${getMyUser().username}(@${properties.MISSKEY_HOST})?)` +
-            "[^0-9A-Za-z_@].*$",
-          "is" // ignore case + dotAll
+          `(?<=(^|[^0-9a-z])@${getMyUser().username}` +
+            `(@${properties.MISSKEY_HOST.replaceAll(".", "\\.")})?)` +
+            "[^0-9a-z_\\-\\.@].*$",
+          "is" // ignoreCase + dotAll
         )
       )?.[0] ?? ""
     ).trim();
@@ -121,7 +122,7 @@ function mentioned(note: MisskeyNote): void {
 }
 
 function getMyUser(): MisskeyUser {
-  const cachedUserJson: ?string = cache.get("misskey/i");
+  const cachedUserJson: string | null = cache.get("misskey/i");
   if (cachedUserJson) return JSON.parse(cachedUserJson) as MisskeyUser;
   const user = callMisskey("i") as MisskeyUser;
   cache.put("misskey/i", JSON.stringify(user));

@@ -61,5 +61,15 @@ function help(params: string): string {
 }
 
 function run(params: string): string {
-  return "この機能はすぐ作るから、あと 500000 時間くらい待ってて！";
+  try {
+    const matchCode: RegExpMatchArray | null = params.match(
+      /^```.*\n.+\n```$/ms // multiline + dotAll
+    );
+    if (matchCode === null) {
+      throw new Error("コードブロックが見つからないよ！");
+    }
+    return "この機能はすぐ作るから、あと 500000 時間くらい待ってて！";
+  } catch (error) {
+    return `[ERROR] :IE: ${error}`;
+  }
 }
