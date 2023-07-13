@@ -85,22 +85,27 @@ function mentioned(note: MisskeyNote): void {
       note.text.match(
         new RegExp(
           `(?<=@${getMyUser().username}(@${properties.MISSKEY_HOST})?)` +
-            "[^0-9A-Za-z_@].*$"
+            "[^0-9A-Za-z_@].*$",
+          "is" // ignore case + dotAll
         )
       )?.[0] ?? ""
     ).trim();
-    const command: string = prompt.match(/.*?(?=\s|$)/)![0];
-    const params: string = prompt.slice(command.length + 1);
-    const result: string = execute(
-      command.normalize("NFKC").toLowerCase(),
-      params,
-      note
-    ).trim();
-    replyMisskey(note, result);
+    if (prompt === "") {
+      replyMisskey(note, help(""));
+    } else if (prompt[0] === "/") {
+      const command: string = prompt.match(/(?<=\/).*?(?=\s|$)/)![0];
+      const params: string = prompt.slice(1 + command.length + 1);
+      replyMisskey(
+        note,
+        execute(command.normalize("NFKC").toLowerCase(), params, note).trim()
+      );
+    } else {
+      replyMisskey(note, chat(note));
+    }
   } catch (error) {
     const reply: MisskeyNote = replyMisskey(
       note,
-      "[ERROR] ごめん！エラーでちゃった！"
+      "[ERROR] ごめん！未知のエラーでちゃった！"
     );
     callMisskey("notes/favorites/create", { noteId: reply.id });
     throw error;

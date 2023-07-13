@@ -27,38 +27,39 @@ function execute(
   params: string = "",
   note: MisskeyNote | null = null
 ): string {
-  return commands[command]?.func(params, note) ?? chat(note);
+  return commands[command]?.func(params, note) ?? help(command);
 }
 
 function help(params: string): string {
-  const command: string = params.split(" ")[0];
+  const command: string = params
+    .match(/^.*?(?=\s|$)/)![0]
+    .replace(/^\//, "")
+    .normalize("NFKC")
+    .toLowerCase();
   if (command === "") {
     return (
       "この BOT についてはプロフィールを見てね！\n" +
       `\nコマンド一覧:\n${Object.entries(commands)
-        .map(([cmd, { description }]) => `${cmd}: ${description}`)
+        .map(([cmd, { description }]) => `/${cmd}: ${description}`)
         .join("\n")}\n` +
-      "\nそれぞれのコマンドの使い方は help <command> で見れるよ！"
+      "\nそれぞれのコマンドの使い方は /help <command> で見れるよ！"
     );
   }
   if (!commands[command]) {
     return (
-      "[ERROR] " +
+      "[ERROR] /" +
       (command.length <= 16 ? command : command.slice(0, 16) + "...") +
-      " ってコマンドはないかな～。ごめんね！"
+      " ってコマンドはないかな～。ごめんね！\n" +
+      "\n/help でコマンド一覧が確認できるよ！"
     );
   }
   const { description, usages } = commands[command];
   return (
-    `${command}: ${description}\n` +
-    `\n使い方:\n${usages.map((usage) => `${command} ${usage}`).join("\n")}`
+    `/${command}: ${description}\n` +
+    `\n使い方:\n${usages.map((usage) => `/${command} ${usage}`).join("\n")}`
   );
 }
 
 function run(params: string): string {
   return "この機能はすぐ作るから、あと 500000 時間くらい待ってて！";
-}
-
-function chat(note: MisskeyNote | null = null): string {
-  return (note ? `${note.user.name} さん！` : "") + "ころころ〜";
 }
