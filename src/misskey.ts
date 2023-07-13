@@ -74,12 +74,20 @@ function doPost(event: Event): TextOutput {
 }
 
 function mentioned(note: MisskeyNote): void {
+  if (note.userId === getMyUser().id) return;
   if (note.user.isBot) return;
-  if (cache.get(`misskey/cooldown/${note.userId}`)) {
-    replyMisskey(note, "[ERROR] メンションが早すぎます！10 秒くらい待ってね！");
+  const COOLTIME = 5;
+  const hits = parseInt(cache.get(`misskey/cooldown/${note.userId}`) ?? "0");
+  cache.put(`misskey/cooldown/${note.userId}`, `${hits + 1}`, COOLTIME);
+  if (hits >= 1) {
+    if (hits === 1) {
+      replyMisskey(
+        note,
+        "[ERROR] メンションが早すぎます！" + `${COOLTIME} 秒くらい待ってね！`
+      );
+    }
     return;
   }
-  cache.put(`misskey/cooldown/${note.userId}`, note.createdAt, 10);
   try {
     const prompt: string = (
       note.text.match(
