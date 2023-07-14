@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+import GAS = GoogleAppsScript;
+
 interface MisskeyUser {
   id: string;
   createdAt: string;
@@ -40,15 +42,15 @@ interface MisskeyRequest {
   body: { user?: MisskeyUser; note?: MisskeyNote };
 }
 
-const cache: Cache = CacheService.getScriptCache();
+const cache: GAS.Cache.Cache = CacheService.getScriptCache();
 
-const properties: {
-  DEBUG_EMAIL: string;
-  MISSKEY_HOST: string;
-  MISSKEY_TOKEN?: string;
-} = PropertiesService.getScriptProperties().getProperties();
+const { DEBUG_EMAIL, MISSKEY_HOST, MISSKEY_TOKEN } =
+  PropertiesService.getScriptProperties().getProperties();
+if (!MISSKEY_HOST || !MISSKEY_TOKEN) {
+  throw new Error("プロパティを設定してください。");
+}
 
-function doPost(event: Event): TextOutput {
+function doPost(event: GAS.Events.DoPost): GAS.Content.TextOutput {
   try {
     const req = JSON.parse(event.postData.contents) as MisskeyRequest;
     if (cache.get(`misskey/received/${req.eventId}`)) {
@@ -60,9 +62,9 @@ function doPost(event: Event): TextOutput {
     }
     return ContentService.createTextOutput("OK.\n");
   } catch (error) {
-    if (properties.DEBUG_EMAIL) {
+    if (DEBUG_EMAIL) {
       GmailApp.sendEmail(
-        properties.DEBUG_EMAIL,
+        DEBUG_EMAIL,
         "[DEBUG] Error occured in Donguri BOT (Misskey)",
         `${error}\n` +
           `\nerror: ${JSON.stringify(error, null, 2)}\n` +
@@ -90,10 +92,10 @@ function mentioned(note: MisskeyNote): void {
   }
   try {
     const prompt: string = (
-      note.text.match(
+      note.text?.match(
         new RegExp(
           `(?<=(^|[^0-9a-z])@${getMyUser().username}` +
-            `(@${properties.MISSKEY_HOST.replaceAll(".", "\\.")})?)` +
+            `(@${MISSKEY_HOST.replaceAll(".", "\\.")})?)` +
             "[^0-9a-z_\\-\\.@].*$",
           "is" // ignoreCase + dotAll
         )
@@ -130,29 +132,31 @@ function getMyUser(): MisskeyUser {
 }
 
 function replyMisskey(note: MisskeyNote, text: string): MisskeyNote {
-  return callMisskey("notes/create", {
-    text:
-      `@${note.user.username}` +
-      (note.user.host ? `@${note.user.host}` : "") +
-      (text.match(/\n/) ? "\n" : " ") +
-      text,
-    replyId: note.id,
-    ...(note.visibility === "specified"
-      ? {
-          visibility: "specified",
-          visibleUserIds: [...note.visibleUserIds, note.userId],
-        }
-      : { visibility: "home" }),
-  }).createdNote as MisskeyNote;
+  return (
+    callMisskey("notes/create", {
+      text:
+        `@${note.user.username}` +
+        (note.user.host ? `@${note.user.host}` : "") +
+        (text.match(/\n/) ? "\n" : " ") +
+        text,
+      replyId: note.id,
+      ...(note.visibility === "specified"
+        ? {
+            visibility: "specified",
+            visibleUserIds: [...note.visibleUserIds!, note.userId],
+          }
+        : { visibility: "home" }),
+    }) as { createdNote: MisskeyNote }
+  ).createdNote;
 }
 
 function callMisskey(endpoint: string, params: Object = {}): unknown {
   const resJson: string = UrlFetchApp.fetch(
-    `https://${properties.MISSKEY_HOST}/api/${endpoint}`,
+    `https://${MISSKEY_HOST}/api/${endpoint}`,
     {
       method: "post",
       contentType: "application/json",
-      payload: JSON.stringify({ i: properties.MISSKEY_TOKEN, ...params }),
+      payload: JSON.stringify({ i: MISSKEY_TOKEN, ...params }),
     }
   ).getContentText();
   const res = JSON.parse(resJson);
