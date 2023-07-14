@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-function chat(note: MisskeyNote): string {
+import { entities as misskeyEntities } from "misskey-js";
+import { GAS } from "./common";
+
+function chat(note: misskeyEntities.Note): string {
   return (note ? `${note.user.name} さん！` : "") + "ころころ〜";
 }

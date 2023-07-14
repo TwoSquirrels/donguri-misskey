@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 
+import { entities as misskeyEntities } from "misskey-js";
+import { GAS } from "./common";
+
 const commands: {
   [key: string]: {
     description: string;
     usages: string[];
-    func: (params: string, note: MisskeyNote | null) => string;
+    func: (params: string, note: misskeyEntities.Note | null) => string;
   };
 } = {
   help: {
@@ -25,7 +28,7 @@ const commands: {
 function execute(
   command: string,
   params: string = "",
-  note: MisskeyNote | null = null
+  note: misskeyEntities.Note | null = null
 ): string {
   return commands[command]?.func(params, note) ?? help(command);
 }

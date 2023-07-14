@@ -2,6 +2,7 @@
   "compilerOptions": {
     "lib": ["esnext"],
     "strict": true,
+    "skipLibCheck": true,
     "noEmit": true,
   }
 }
