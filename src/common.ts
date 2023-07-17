@@ -53,12 +53,9 @@ export class MisskeyBot {
         (text.match(/\n/) ? "\n" : " ") +
         text,
       replyId: note.id,
-      ...(note.visibility === "specified"
-        ? {
-            visibility: "specified",
-            visibleUserIds: [...note.visibleUserIds!, note.userId],
-          }
-        : { visibility: "home" }),
+      visibility: note.visibility,
+      visibleUserIds: [...(note.visibleUserIds ?? []), note.userId],
+      localOnly: note.localOnly,
     }).createdNote;
   }
 
