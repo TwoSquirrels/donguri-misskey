@@ -46,12 +46,13 @@ export class MisskeyBot {
   }
 
   reply(note: misskeyEntities.Note, text: string): misskeyEntities.Note {
+    const mention: string =
+      `@${note.user.username}` + (note.user.host ? `@${note.user.host}` : "");
     return this.callApi("notes/create", {
       text:
-        `@${note.user.username}` +
-        (note.user.host ? `@${note.user.host}` : "") +
-        (text.match(/\n/) ? "\n" : " ") +
+        (note.cw == null ? mention + (text.match(/\n/) ? "\n" : " ") : "") +
         text,
+      cw: note.cw && mention,
       replyId: note.id,
       visibility: note.visibility,
       visibleUserIds: [...(note.visibleUserIds ?? []), note.userId],

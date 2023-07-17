@@ -55,15 +55,16 @@ function mentioned(note: misskeyEntities.Note): void {
     return;
   }
   try {
+    const content = (note.cw == null ? "" : note.cw + "\n") + (note.text ?? "");
     const prompt: string = (
-      note.text?.match(
+      content.match(
         new RegExp(
           `(?<=(^|[^0-9a-z])@${bot.getMyUser().username}` +
             `(@${bot.host.replaceAll(".", "\\.")})?)` +
             "[^0-9a-z_\\-\\.@].*$",
           "is" // ignoreCase + dotAll
         )
-      )?.[0] ?? ""
+      )?.[0] ?? content
     ).trim();
     if (prompt === "") {
       bot.reply(note, help(""));
