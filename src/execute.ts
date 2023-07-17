@@ -2,6 +2,9 @@
 
 import { entities as misskeyEntities } from "misskey-js";
 import { GAS } from "./common";
+import { RunResult, Runner } from "./runner";
+
+declare const runners: { [key: string]: Runner };
 
 const commands: {
   [key: string]: {
@@ -65,13 +68,34 @@ function help(params: string): string {
 
 function run(params: string): string {
   try {
-    const matchCode: RegExpMatchArray | null = params.match(
+    const codeBlock: RegExpMatchArray | null = params.match(
       /^```.*\n.+\n```$/ms // multiline + dotAll
     );
-    if (matchCode === null) {
+    if (codeBlock === null) {
       throw new Error("コードブロックが見つからないよ！");
     }
-    return "この機能はすぐ作るから、あと 500000 時間くらい待ってて！";
+    const ext: string = codeBlock[0].match(/(?<=^```).*/)![0].toLowerCase();
+    const code: string = codeBlock[0].match(/(?<=\n).+(?=\n)/s)![0];
+    const args: string = params
+      .slice(0, codeBlock.index!)
+      .normalize("NFKC")
+      .toLowerCase()
+      .trim();
+    // TODO: 言語と実行環境とコンパイラを調べる
+    if (args !== "") throw new Error("現状 Text しかできないんだ！ごめんね！");
+    const result: RunResult = runners["local"]!("text", code);
+    return (
+      "標準出力:" +
+      (result.stdout ? "\n```\n" + result.stdout + "\n```\n" : "\n") +
+      "標準エラー出力:" +
+      (result.stderr ? "\n```\n" + result.stderr + "\n```\n" : "\n") +
+      (result.exitCode ? `終了コード: ${result.exitCode}\n` : "") +
+      `言語: ${"Text"} (${"Local"})\n` +
+      `コード長: ${Utilities.newBlob(code).getBytes().length} Byte\n` +
+      `結果: ${result.status}\n` +
+      (result.execTime != null ? `実行時間: ${result.execTime} ms\n` : "") +
+      (result.memory != null ? `メモリ: ${result.memory} KB\n` : "")
+    ).trim();
   } catch (error) {
     return `[ERROR] :IE: ${error}`;
   }
