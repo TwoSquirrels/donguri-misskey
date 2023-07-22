@@ -13,9 +13,9 @@ const langs = {
 
 export type Langs = typeof langs;
 
-function determineLang(s: string): keyof Langs | null {
+function determineLang(name: string): keyof Langs | null {
   for (const l in langs) {
-    if (langs[l as keyof Langs].names.includes(s)) {
+    if (langs[l as keyof Langs].names.includes(name)) {
       return l as keyof Langs;
     }
   }
@@ -32,35 +32,68 @@ export type RunResult = {
 };
 
 export class Runner<L extends keyof Langs> {
+  names: string[];
   langs: L[];
   run: (lang: L, code: string, input?: string) => RunResult;
-  constructor(langs: Runner<L>["langs"], run: Runner<L>["run"]) {
+  constructor(
+    names: string[],
+    langs: Runner<L>["langs"],
+    run: Runner<L>["run"]
+  ) {
+    this.names = names;
     this.langs = langs;
     this.run = run;
   }
 }
 
 const runners = {
-  local: new Runner(["text", "brainfuck"], (lang, code, input = "") => {
-    switch (lang) {
-      case "text":
-        return { status: "OK", stdout: code, stderr: "", execTime: 0 };
-      case "brainfuck":
-        throw new Error("brainfuck は実装予定だから、ちょっと待ってね。");
+  local: new Runner(
+    ["local", "gas"],
+    ["text", "brainfuck"],
+    (lang, code, input = "") => {
+      switch (lang) {
+        case "text":
+          return { status: "OK", stdout: code, stderr: "", execTime: 0 };
+        case "brainfuck":
+          throw new Error("brainfuck は実装予定だから、ちょっと待ってね。");
+      }
     }
-  }),
-  wandbox: new Runner(["c", "cpp"], (lang, code, input = "") => {
-    throw new Error("Wandbox は対応予定だから、ちょっと待ってね。");
-  }),
-  paizaio: new Runner(["c", "cpp"], (lang, code, input = "") => {
-    throw new Error("PaizaIO は対応予定だから、ちょっと待ってね。");
-  }),
+  ),
+  wandbox: new Runner(
+    ["wandbox", "wand", "wandbox.org"],
+    ["c", "cpp"],
+    (lang, code, input = "") => {
+      throw new Error("Wandbox は対応予定だから、ちょっと待ってね。");
+    }
+  ),
+  paizaio: new Runner(
+    ["paiza.io", "paiza", "paizaio"],
+    ["c", "cpp"],
+    (lang, code, input = "") => {
+      throw new Error("paiza.IO は対応予定だから、ちょっと待ってね。");
+    }
+  ),
 } as const;
 
 export type Runners = typeof runners;
 
-function determineRunners(lang: keyof Langs): (keyof Runners)[] {
-  return (Object.entries(runners) as [keyof Runners, Runners[keyof Runners]][])
-    .filter(([, runner]) => (runner.langs as (keyof Langs)[]).includes(lang))
-    .map(([name]) => name);
+function determineRunners({
+  name,
+  lang,
+}: {
+  name?: string;
+  lang?: keyof Langs;
+}): (keyof Runners)[] {
+  const availableRunners: (keyof Runners)[] = [];
+  for (const runnerName in runners) {
+    const runner = runners[runnerName as keyof Runners];
+    if (name != null && !runner.names.includes(name)) {
+      continue;
+    }
+    if (lang != null && !(runner.langs as (keyof Langs)[]).includes(lang)) {
+      continue;
+    }
+    availableRunners.push(runnerName as keyof Runners);
+  }
+  return availableRunners;
 }

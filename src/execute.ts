@@ -5,9 +5,12 @@ import { GAS } from "./common";
 import { Langs, RunResult, Runner, Runners } from "./runner";
 
 declare const langs: Langs;
-declare function determineLang(s: string): keyof Langs | null;
+declare function determineLang(name: string): keyof Langs | null;
 declare const runners: Runners;
-declare function determineRunners(lang: keyof Langs): (keyof Runners)[];
+declare function determineRunners({}: {
+  name?: string;
+  lang?: keyof Langs;
+}): (keyof Runners)[];
 
 const commands: {
   [key: string]: {
@@ -94,9 +97,9 @@ function run(params: string): string {
     let lang: keyof Langs | null = null;
     for (const arg of args) {
       if (arg === "") continue;
-      if (runnerName == null && runners.hasOwnProperty(arg)) {
-        runnerName = arg as keyof Runners;
-        continue;
+      if (runnerName == null) {
+        runnerName = determineRunners({ name: arg })[0];
+        if (runnerName != null) continue;
       }
       if (lang == null) {
         lang = determineLang(arg);
@@ -111,7 +114,7 @@ function run(params: string): string {
       throw new Error("言語を指定してね。");
     }
     if (runnerName == null) {
-      runnerName = determineRunners(lang)[0];
+      runnerName = determineRunners({ lang })[0];
       if (runnerName == null) {
         throw new Error(`${lang} 言語に対応した実行環境は無いっぽいよ！`);
       }
