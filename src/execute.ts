@@ -72,13 +72,18 @@ function help(params: string): string {
 function run(params: string): string {
   try {
     const codeBlock: RegExpMatchArray | null = params.match(
-      /^```.*\n.+\n```$/ms // multiline + dotAll
+      /^```[^\n]*\n.+?\n```$/ms
     );
-    if (codeBlock === null) {
+    if (codeBlock == null) {
       throw new Error("コードブロックが見つからないよ！");
     }
     const ext: string = codeBlock[0].match(/(?<=^```).*/)![0].toLowerCase();
     const code: string = codeBlock[0].match(/(?<=\n).+(?=\n)/s)![0];
+    const inputBlock: RegExpMatchArray | null = params
+      .slice(codeBlock.index! + codeBlock[0].length)
+      .match(/^```[^\n]*\n.+\n```$/ms);
+    const input: string | null =
+      inputBlock?.[0].match(/(?<=\n).+(?=\n)/s)![0] ?? null;
     const args: string[] = params
       .slice(0, codeBlock.index!)
       .normalize("NFKC")
@@ -118,7 +123,8 @@ function run(params: string): string {
     // run code
     const result: RunResult = runner.run(
       lang as typeof runner extends Runner<infer P> ? P : never,
-      code
+      code,
+      input ?? ""
     );
     return (
       "標準出力:" +
