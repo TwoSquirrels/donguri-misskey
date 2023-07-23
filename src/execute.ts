@@ -90,7 +90,6 @@ function run(params: string): string {
     const args: string[] = params
       .slice(0, codeBlock.index!)
       .normalize("NFKC")
-      .toLowerCase()
       .trim()
       .split(/\s+/);
     let runnerName: keyof Runners | null = null;
