@@ -2,7 +2,7 @@
 
 import { entities as misskeyEntities } from "misskey-js";
 import { GAS } from "./common";
-import { Langs, RunResult, Runner, Runners } from "./runner";
+import { Langs, RunResult, Runner, Runners } from "./runner/";
 
 declare const langs: Langs;
 declare function determineLang(name: string): keyof Langs | null;
