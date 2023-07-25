@@ -20,7 +20,7 @@ function doPost(event: GAS.Events.DoPost): GAS.Content.TextOutput {
     if (cache.get(`misskey/received/${hookEvent.eventId}`)) {
       return ContentService.createTextOutput("Already Received.\n");
     }
-    cache.put(`misskey/events/${hookEvent.eventId}`, "RECEIVED");
+    cache.put(`misskey/received/${hookEvent.eventId}`, "RECEIVED");
     if (hookEvent.type === "mention") {
       mentioned(hookEvent.body.note);
     }
