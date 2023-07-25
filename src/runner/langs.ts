@@ -96,7 +96,7 @@ const langs = {
   whitespace: { names: ["whitespace", "ws"] },
   zig: { names: ["zig"] },
   zsh: { names: ["zsh"] },
-} satisfies { [key: string]: { names: string[] } };
+} satisfies { [key: string]: { names: [string, ...string[]] } };
 
 export type Langs = typeof langs;
 

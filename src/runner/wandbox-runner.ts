@@ -2,7 +2,7 @@
 
 import { Runner } from ".";
 
-function getWandboxRunner(names: string[]) {
+function getWandboxRunner(names: [string, ...string[]]) {
   return new Runner(
     names,
     /* prettier-ignore */ [

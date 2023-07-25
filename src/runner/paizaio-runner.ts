@@ -3,7 +3,7 @@
 import { GAS } from "../common";
 import { RunResult, Runner } from ".";
 
-function getPaizaioRunner(names: string[]) {
+function getPaizaioRunner(names: [string, ...string[]]) {
   return new Runner(
     names,
     /* prettier-ignore */ [

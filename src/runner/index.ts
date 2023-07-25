@@ -6,9 +6,9 @@ import { WandboxRunner } from "./wandbox-runner";
 import { PaizaioRunner } from "./paizaio-runner";
 
 declare const langs: Langs;
-declare function getLocalRunner(names: string[]): LocalRunner;
-declare function getWandboxRunner(names: string[]): WandboxRunner;
-declare function getPaizaioRunner(names: string[]): PaizaioRunner;
+declare function getLocalRunner(names: [string, ...string[]]): LocalRunner;
+declare function getWandboxRunner(names: [string, ...string[]]): WandboxRunner;
+declare function getPaizaioRunner(names: [string, ...string[]]): PaizaioRunner;
 
 export { Langs };
 
@@ -22,11 +22,11 @@ export type RunResult = {
 };
 
 export class Runner<L extends keyof Langs> {
-  names: string[];
+  names: [string, ...string[]];
   langs: L[];
   run: (lang: L, code: string, input?: string) => RunResult;
   constructor(
-    names: string[],
+    names: [string, ...string[]],
     langs: Runner<L>["langs"],
     run: Runner<L>["run"]
   ) {

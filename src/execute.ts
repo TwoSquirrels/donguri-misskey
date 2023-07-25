@@ -92,13 +92,13 @@ function run(params: string): string {
       .normalize("NFKC")
       .trim()
       .split(/\s+/);
-    let runnerName: keyof Runners | null = null;
+    let runnerId: keyof Runners | null = null;
     let lang: keyof Langs | null = null;
     for (const arg of args) {
       if (arg === "") continue;
-      if (runnerName == null) {
-        runnerName = determineRunners({ name: arg })[0];
-        if (runnerName != null) continue;
+      if (runnerId == null) {
+        runnerId = determineRunners({ name: arg })[0];
+        if (runnerId != null) continue;
       }
       if (lang == null) {
         lang = determineLang(arg);
@@ -112,15 +112,19 @@ function run(params: string): string {
     if (lang == null) {
       throw new Error("言語を指定してね。");
     }
-    if (runnerName == null) {
-      runnerName = determineRunners({ lang })[0];
-      if (runnerName == null) {
-        throw new Error(`${lang} 言語に対応した実行環境は無いっぽいよ！`);
+    if (runnerId == null) {
+      runnerId = determineRunners({ lang })[0];
+      if (runnerId == null) {
+        throw new Error(
+          `${langs[lang].names[0]} 言語に対応した実行環境は無いっぽいよ！`
+        );
       }
     }
-    const runner = runners[runnerName];
+    const runner = runners[runnerId];
     if (!runner.langs.some((l) => lang === l)) {
-      throw new Error(`${runnerName} は ${lang} 言語に対応してないよ！`);
+      throw new Error(
+        `${runner.names[0]} は ${langs[lang].names[0]} 言語に対応してないよ！`
+      );
     }
     // run code
     const result: RunResult = runner.run(
@@ -144,7 +148,7 @@ function run(params: string): string {
           "\n```\n"
         : "\n") +
       (result.exitCode ? `終了コード: ${result.exitCode}\n` : "") +
-      `言語: ${lang} (${runnerName})\n` +
+      `言語: ${langs[lang].names[0]} (${runner.names[0]})\n` +
       `コード長: ${Utilities.newBlob(code).getBytes().length} Byte\n` +
       `結果: ${result.status}\n` +
       (result.execTime != null ? `実行時間: ${result.execTime} ms\n` : "") +

@@ -2,7 +2,7 @@
 
 import { Runner } from ".";
 
-function getLocalRunner(names: string[]) {
+function getLocalRunner(names: [string, ...string[]]) {
   return new Runner(names, ["text", "brainfuck"], (lang, code, input = "") => {
     switch (lang) {
       case "text":
