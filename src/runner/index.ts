@@ -13,7 +13,7 @@ declare function getPaizaioRunner(names: string[]): PaizaioRunner;
 export { Langs };
 
 export type RunResult = {
-  status: "OK" | "CE" | "RE" | "TLE" | "MLE" | "IE";
+  status: "AC" | "CE" | "RE" | "TLE" | "MLE" | "IE";
   stdout: string;
   stderr: string;
   exitCode?: string;

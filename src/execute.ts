@@ -2,7 +2,7 @@
 
 import { entities as misskeyEntities } from "misskey-js";
 import { GAS } from "./common";
-import { Langs, RunResult, Runner, Runners } from "./runner/";
+import { Langs, RunResult, Runner, Runners } from "./runner";
 
 declare const langs: Langs;
 declare function determineLang(name: string): keyof Langs | null;
@@ -130,9 +130,19 @@ function run(params: string): string {
     );
     return (
       "標準出力:" +
-      (result.stdout ? "\n```\n" + result.stdout + "\n```\n" : "\n") +
+      (result.stdout
+        ? "\n```\n" +
+          result.stdout.slice(0, 1024) +
+          (result.stdout.length > 1024 ? " ..." : "") +
+          "\n```\n"
+        : "\n") +
       "標準エラー出力:" +
-      (result.stderr ? "\n```\n" + result.stderr + "\n```\n" : "\n") +
+      (result.stderr
+        ? "\n```\n" +
+          result.stderr.slice(0, 1024) +
+          (result.stderr.length > 1024 ? " ..." : "") +
+          "\n```\n"
+        : "\n") +
       (result.exitCode ? `終了コード: ${result.exitCode}\n` : "") +
       `言語: ${lang} (${runnerName})\n` +
       `コード長: ${Utilities.newBlob(code).getBytes().length} Byte\n` +

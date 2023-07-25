@@ -6,7 +6,7 @@ function getLocalRunner(names: string[]) {
   return new Runner(names, ["text", "brainfuck"], (lang, code, input = "") => {
     switch (lang) {
       case "text":
-        return { status: "OK", stdout: code, stderr: "", execTime: 0 };
+        return { status: "AC", stdout: code, stderr: "", execTime: 0 };
       case "brainfuck":
         throw new Error("brainfuck は実装予定だから、ちょっと待ってね。");
     }

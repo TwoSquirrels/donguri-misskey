@@ -88,7 +88,7 @@ const langs = {
   solidity: { names: ["solidity", "sol"] },
   sqlite: { names: ["sqlite" /*, "sql"*/] },
   swift: { names: ["swift"] },
-  text: { names: ["text", "txt", "cat"] },
+  text: { names: ["text", "txt", "cat", "plain", "plaintext"] },
   typescript: { names: ["typescript", "ts", "cts", "ts-node"] },
   v: { names: ["v"] },
   vim: { names: ["vimscript", "vim"] },
