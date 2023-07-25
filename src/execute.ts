@@ -4,6 +4,7 @@ import { entities as misskeyEntities } from "misskey-js";
 import { GAS } from "./common";
 import { Langs, RunResult, Runner, Runners } from "./runner";
 
+declare function misskeyEmoji(emojiName: string, altText?: string): string;
 declare const langs: Langs;
 declare function determineLang(name: string): keyof Langs | null;
 declare const runners: Runners;
@@ -150,11 +151,13 @@ function run(params: string): string {
       (result.exitCode ? `終了コード: ${result.exitCode}\n` : "") +
       `言語: ${langs[lang].names[0]} (${runner.names[0]})\n` +
       `コード長: ${Utilities.newBlob(code).getBytes().length} Byte\n` +
-      `結果: ${result.status}\n` +
+      `結果: ${misskeyEmoji(result.status)}\n` +
       (result.execTime != null ? `実行時間: ${result.execTime} ms\n` : "") +
       (result.memory != null ? `メモリ: ${result.memory} KB\n` : "")
     ).trim();
   } catch (error) {
-    return `[ERROR] :IE: ${error}`;
+    return `[ERROR] ${
+      error instanceof Error && error.name === "Error" ? error.message : error
+    }`;
   }
 }
