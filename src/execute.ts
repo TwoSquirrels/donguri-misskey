@@ -29,9 +29,20 @@ const commands: {
     func: help,
   },
   run: {
-    description: "[未完成] コードを実行するよ",
-    usages: [],
+    description: "コードを実行するよ (対応言語は /langs コマンドで確認してね)",
+    usages: [
+      "<language> (<runner>) ````\\n<code>\\n```` (````\\n<input>\\n````) でコードを実行するよ。",
+      "(<runner>) ````<language>\\n<code>\\n```` (````\\n<input>\\n````) みたいに言語を指定してもいいよ。",
+    ],
     func: run,
+  },
+  langs: {
+    description: "/run コマンド対応言語一覧をあげるよ",
+    usages: [
+      "で言語一覧が貰えるよ。",
+      "<runner> でその実行環境で使える言語一覧が見れるよ。",
+    ],
+    func: listLangs,
   },
 };
 
@@ -98,7 +109,7 @@ function run(params: string): string {
     for (const arg of args) {
       if (arg === "") continue;
       if (runnerId == null) {
-        runnerId = determineRunners({ name: arg })[0];
+        runnerId = determineRunners({ name: arg })[0] ?? null;
         if (runnerId != null) continue;
       }
       if (lang == null) {
@@ -114,7 +125,7 @@ function run(params: string): string {
       throw new Error("言語を指定してね。");
     }
     if (runnerId == null) {
-      runnerId = determineRunners({ lang })[0];
+      runnerId = determineRunners({ lang })[0] ?? null;
       if (runnerId == null) {
         throw new Error(
           `${langs[lang].names[0]} 言語に対応した実行環境は無いっぽいよ！`
@@ -160,4 +171,37 @@ function run(params: string): string {
       error instanceof Error && error.name === "Error" ? error.message : error
     }`;
   }
+}
+
+function listLangs(params: string): string {
+  if (!params) {
+    return (
+      "/run コマンド対応言語一覧:\n" +
+      (Object.entries(langs) as [keyof Langs, Langs[keyof Langs]][])
+        .map(([lang, { names }]) => {
+          const runnerNames: string[] = determineRunners({ lang }).map(
+            (runnerId) => runners[runnerId].names[0]
+          );
+          return runnerNames.length >= 1
+            ? `- ${names[0]} (${runnerNames.join(", ")})`
+            : null;
+        })
+        .filter((line) => line != null)
+        .join("\n")
+    );
+  }
+  const runnerId: keyof Runners | null =
+    determineRunners({ name: params })[0] ?? null;
+  if (runnerId == null) {
+    return (
+      "[ERROR] " +
+      (params.length <= 16 ? params : params.slice(0, 16) + "...") +
+      " って実行環境はないかな～。ごめんね！"
+    );
+  }
+  const runner = runners[runnerId];
+  return (
+    `${runner.names[0]} で使える言語一覧:\n` +
+    runner.langs.map((lang) => langs[lang].names[0]).join(", ")
+  );
 }
