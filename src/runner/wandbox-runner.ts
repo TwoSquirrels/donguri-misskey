@@ -132,7 +132,7 @@ function getWandboxRunner(names: [string, ...string[]]) {
         throw new Error(`Wandbox に ${langName} 言語が対応してないっぽい。`);
       }
       // compile
-      // TODO: measure execution time
+      const timeRequested: number = Date.now();
       const compileRes: GAS.URL_Fetch.HTTPResponse = UrlFetchApp.fetch(
         "https://wandbox.org/api/compile.json",
         {
@@ -152,6 +152,7 @@ function getWandboxRunner(names: [string, ...string[]]) {
           muteHttpExceptions: true,
         }
       );
+      const timeResponsed: number = Date.now();
       if (compileRes.getResponseCode() !== 200) {
         throw new Error(compileRes.getContentText());
       }
@@ -180,6 +181,7 @@ function getWandboxRunner(names: [string, ...string[]]) {
       if (compileResult.signal) {
         result.exitCode += ` (${compileResult.signal})`;
       }
+      result.execTime = Math.max(0, timeResponsed - timeRequested - 500);
       return result;
     }
   );
