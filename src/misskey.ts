@@ -6,6 +6,7 @@ import { GAS, MisskeyBot, MisskeyHookEvent } from "./common";
 declare const cache: GAS.Cache.Cache;
 declare const DEBUG_EMAIL: string | undefined;
 declare const bot: MisskeyBot;
+declare const misskeyRateLimit: number;
 declare function execute(
   command: string,
   params?: string,
@@ -42,14 +43,29 @@ function doPost(event: GAS.Events.DoPost): GAS.Content.TextOutput {
 function mentioned(note: misskeyEntities.Note): void {
   if (note.userId === bot.getMyUser().id) return;
   if ((note.user as misskeyEntities.UserDetailed).isBot) return;
-  const COOLTIME = 5;
-  const hits = parseInt(cache.get(`misskey/cooldown/${note.userId}`) ?? "0");
-  cache.put(`misskey/cooldown/${note.userId}`, `${hits + 1}`, COOLTIME);
-  if (hits >= 1) {
-    if (hits === 1) {
+  // rate limit
+  const hours = Math.floor(Date.now() / 3600000);
+  const hits =
+    parseInt(cache.get(`misskey/hits/${hours}/${note.userId}`) ?? "0") + 1;
+  cache.put(`misskey/hits/${hours}/${note.userId}`, hits.toString(), 4000);
+  if (hits > misskeyRateLimit) {
+    if (hits === misskeyRateLimit + 1) {
       bot.reply(
         note,
-        "[ERROR] メンションが早すぎます！" + `${COOLTIME} 秒くらい待ってね！`
+        `[ERROR] メンションは毎時 ${misskeyRateLimit} 回までしか受け付けられないよ！`
+      );
+    }
+    return;
+  }
+  // cool down
+  const cooltime = note.user.host == null ? 10.0 : 30.0;
+  const combo = parseInt(cache.get(`misskey/combo/${note.userId}`) ?? "0") + 1;
+  cache.put(`misskey/combo/${note.userId}`, combo.toString(), cooltime);
+  if (combo >= 2) {
+    if (combo === 2) {
+      bot.reply(
+        note,
+        "[ERROR] メンションが早すぎます！" + `${cooltime} 秒くらい待ってね！`
       );
     }
     return;
@@ -78,7 +94,17 @@ function mentioned(note: misskeyEntities.Note): void {
     } else {
       bot.reply(note, chat(note));
     }
+    cache.put(
+      `misskey/combo/${note.userId}`,
+      cache.get(`misskey/combo/${note.userId}`) ?? combo.toString(),
+      cooltime
+    );
   } catch (error) {
+    cache.put(
+      `misskey/combo/${note.userId}`,
+      cache.get(`misskey/combo/${note.userId}`) ?? combo.toString(),
+      cooltime
+    );
     const reply: misskeyEntities.Note = bot.reply(
       note,
       "[ERROR] ごめん！未知のエラーでちゃった！"

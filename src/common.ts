@@ -83,12 +83,19 @@ export type MisskeyHookEvent = {
 
 const cache: GAS.Cache.Cache = CacheService.getScriptCache();
 
-const { DEBUG_EMAIL, MISSKEY_HOST, MISSKEY_TOKEN, MISSKEY_EMOJIS } =
-  PropertiesService.getScriptProperties().getProperties();
+const {
+  DEBUG_EMAIL,
+  MISSKEY_HOST,
+  MISSKEY_TOKEN,
+  MISSKEY_RATE_LIMIT,
+  MISSKEY_EMOJIS,
+} = PropertiesService.getScriptProperties().getProperties();
 
 if (!MISSKEY_HOST) throw new Error("MISSKEY_HOST が設定されていません。");
 if (!MISSKEY_TOKEN) throw new Error("MISSKEY_TOKEN が設定されていません。");
 const bot = new MisskeyBot(MISSKEY_HOST, MISSKEY_TOKEN);
+
+const misskeyRateLimit: number = parseInt(MISSKEY_RATE_LIMIT) || 100;
 
 const misskeyEmojis: { [key: string]: string | undefined } = Object.fromEntries(
   (MISSKEY_EMOJIS ?? "")
