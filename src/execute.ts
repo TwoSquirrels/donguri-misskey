@@ -144,6 +144,7 @@ function run(params: string): string {
       code,
       input ?? ""
     );
+    result.langName ??= langs[lang].names[0];
     return (
       "標準出力:" +
       (result.stdout
@@ -160,7 +161,7 @@ function run(params: string): string {
           "\n```\n"
         : "\n") +
       (result.exitCode ? `終了コード: ${result.exitCode}\n` : "") +
-      `言語: ${langs[lang].names[0]} (${runner.names[0]})\n` +
+      `言語: ${result.langName} (${runner.names[0]})\n` +
       `コード長: ${Utilities.newBlob(code).getBytes().length} Byte\n` +
       `結果: ${misskeyEmoji(result.status)}\n` +
       (result.execTime != null ? `実行時間: ${result.execTime} ms\n` : "") +

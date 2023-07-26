@@ -13,6 +13,7 @@ declare function getPaizaioRunner(names: [string, ...string[]]): PaizaioRunner;
 export { Langs };
 
 export type RunResult = {
+  langName?: string;
   status: "AC" | "CE" | "RE" | "TLE" | "MLE" | "IE";
   stdout: string;
   stderr: string;
@@ -37,7 +38,7 @@ export class Runner<L extends keyof Langs> {
 }
 
 const runners = {
-  local: getLocalRunner(["local", "gas"]),
+  //local: getLocalRunner(["local", "gas"]),
   wandbox: getWandboxRunner(["wandbox", "wand", "wandbox.org"]),
   paizaio: getPaizaioRunner(["paiza.io", "paiza", "paizaio"]),
 } as const;

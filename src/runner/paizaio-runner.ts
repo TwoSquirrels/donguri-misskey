@@ -92,6 +92,7 @@ function getPaizaioRunner(names: [string, ...string[]]) {
       }
       // return result
       const result: RunResult = { status: "AC", stdout: "", stderr: "" };
+      result.langName = details.language;
       if (details.status !== "completed") {
         result.status = "IE";
       } else if (details.build_result && details.build_result !== "success") {
