@@ -21,7 +21,7 @@ const commands: {
   };
 } = {
   help: {
-    description: "[未完成] ヘルプあげるよ",
+    description: "ヘルプあげるよ",
     usages: [
       "でヘルプが貰えるよ。",
       "<command> でそのコマンドについてのヘルプが見れるよ。",
